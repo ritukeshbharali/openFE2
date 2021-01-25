@@ -218,24 +218,24 @@ while true
         if Mflag(2) == 0 || iter == inp_macro.solver.maxiter
             
             % Display 'failure to converge' message to command window
-			disp('Macro-problem failed to converge!');
+	    disp('Macro-problem failed to converge!');
             
             % Revert macro-scale variables
-			Sol   = globDat.oldStepSol;
-			Res   = globDat.oldStepRes;
-			K     = globDat.oldStepK;
-			time  = time - timestep;
-			step  = step - 1;
+	    Sol   = globDat.oldStepSol;
+	    Res   = globDat.oldStepRes;
+	    K     = globDat.oldStepK;
+	    time  = time - timestep;
+	    step  = step - 1;
 			
-			% Reduce timestep size
-			timestep = timestep/inp_macro.solver.cutstepsize;
+	    % Reduce timestep size
+	    timestep = timestep/inp_macro.solver.cutstepsize;
             
             % Revert all RVEs to old 'converged' step
             RVERevert(MacroMesh,inp_rve.problem.type,...
                                       globDat.RVEoldStepSol,comsolPort);
             
             % Display messages to the command window
-			disp(['Reverted to Step',num2str(step)]);
+	    disp(['Reverted to Step',num2str(step)]);
             disp(['Step-size set to ',num2str(timestep)]);
             
             break;
@@ -253,7 +253,7 @@ while true
         err = norm(Sol-oldSol)/norm(Sol0);
         
         % Display errors in the command window
-		disp(['Iter = ',num2str(iter),', Error in Sol = ',num2str(err)])
+	disp(['Iter = ',num2str(iter),', Error in Sol = ',num2str(err)])
         
         % Check for convergence        
         if err < inp_macro.solver.nonlinsolvertol
@@ -299,19 +299,19 @@ while true
             end            
                                      
             % Store nodal forces and solution into global database
-			globDat.Force(:,step-step0+1) = Res;
-			globDat.Disp(:,step-step0+1)  = Sol;
+	    globDat.Force(:,step-step0+1) = Res;
+	    globDat.Disp(:,step-step0+1)  = Sol;
             globDat.stress        = GPData.stress;
             
             % Update oldoldStep data
-			globDat.oldoldStepSol  = globDat.oldStepSol;
-			globDat.oldoldStepRes  = globDat.oldStepRes;
-			globDat.oldoldStepK    = globDat.oldStepK;
+	    globDat.oldoldStepSol  = globDat.oldStepSol;
+	    globDat.oldoldStepRes  = globDat.oldStepRes;
+	    globDat.oldoldStepK    = globDat.oldStepK;
             
             % Update oldStep data
-			globDat.oldStepSol  = Sol;
-			globDat.oldStepRes  = Res;
-			globDat.oldStepK    = K;
+	    globDat.oldStepSol  = Sol;
+	    globDat.oldStepRes  = Res;
+	    globDat.oldStepK    = K;
             
             disp(['Reaction = ',num2str(globDat.Force(inp_macro.postproc.loadDof,step-step0+1)), ...
                       '[N], Displacement = ',num2str(globDat.Disp(inp_macro.postproc.dispDof,step-step0+1)), ' [m]'])
