@@ -1,5 +1,7 @@
 # openFE2
 
+[![DOI](https://zenodo.org/badge/332758094.svg)](https://zenodo.org/badge/latestdoi/332758094)
+
 openFE2 is a software framework capable of carrying out (linear/nonlinear) multi-scale FE2 simulations. The macro-scale problem is solved in MATLAB while the micro-scale (RVE) problems are solved in parallel in COMSOL Multiphysics. The parallel setup is achieved using the MATLAB Parallel Computing Toolbox, which creates multiple instances of the COMSOL Multiphysics server.
 
 ### Features
