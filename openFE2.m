@@ -58,6 +58,9 @@ disp('    - Setting up directories')
 dir_input  = '.\input';
 dir_src    = '.\src';
 dir_output = '.\output';
+if ~exist(dir_output, 'dir')
+    mkdir(dir_output)
+end
 % dir_mlilib  = 'C:\Program Files\COMSOL\COMSOL55\Multiphysics\mli';
 dir_mlilib  = 'C:\Progs\COMSOL55\mli';
 

@@ -48,7 +48,7 @@ time = time(2);
 
 % Copy RVEs to the working directory './output/RVEs'
 try
-copyfile( fullfile(dir_restart,sub_dir,'RVE*.mph'), './output/RVEs'  );
+copyfile( fullfile(dir_restart,sub_dir,'RVE*.mph'), '.\output\RVEs'  );
 catch
     warning('Failed to get RVEs for the restart!')
 end

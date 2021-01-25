@@ -26,7 +26,7 @@
 function CreateRestartFiles(Sol,Res,K,Mesh,RVEdata,step,time)
 
 % Create a directory to store restart files if it does not exist
-dir_restart = './restart';
+dir_restart = '.\restart';
 sub_dir     = sprintf('Step%d', step);
 if ~exist(fullfile(dir_restart,sub_dir), 'dir')
     mkdir(fullfile(dir_restart,sub_dir))
@@ -54,7 +54,7 @@ dlmwrite(fullfile(dir_restart,sub_dir,'Time.txt'),[step time], 'delimiter', '\t'
 
 % Copy RVEs to the restart folder
 try
-copyfile( fullfile('./output/RVEs', 'RVE*.mph'), fullfile(dir_restart,sub_dir) );
+copyfile( fullfile('.\output\RVEs', 'RVE*.mph'), fullfile(dir_restart,sub_dir) );
 catch
     warning('Failed to store RVEs for restart!')
 end
