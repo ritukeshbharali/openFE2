@@ -100,24 +100,26 @@ for num = 1:inp_parallel.nparRVE
 end
 clear num COMSOLPort;
 
+% Delete existing parpool and start a new one
+delete(gcp('nocreate'));
+parpool(inp_parallel.nparRVE);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ALLOCATE RVEs TO EACH MACRO GAUSS POINT AND COMPUTE INITIAL STIFFNESS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp('    - Allocating RVEs & computing initial stiffness matrix')
-[K,D,RVEdata] = AssembleInitMacroSystem(MacroMesh,...
+[K,~,RVEdata] = AssembleInitMacroSystem(MacroMesh,...
                              inp_macro.problem,inp_rve.problem,comsolPort);
 
                          
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SETUP A GLOBAL DATABASE AND STORE HOMOGENISED TANGENT MODULI
+% SETUP A GLOBAL DATABASE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 disp('    - Setting up a global database')
 globDat    = setupGlobalDatabase(K,MacroMesh,inp_macro,RVEdata);
-globDat.D  = D;
-clear D;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -188,7 +190,7 @@ while true
         oldK     = K;
         
         % Modify history variable (Comment for elasticity!)
-         RVESetHistory(MacroMesh,inp_rve.problem.type,...
+        RVESetHistory(MacroMesh,inp_rve.problem.type,...
                                        globDat.RVEoldStepSol,comsolPort);
         
         % Get macro-scale residual and/or stiffness matrix        
@@ -220,13 +222,13 @@ while true
 	    % Reduce timestep size
 	    timestep = timestep/inp_macro.solver.cutstepsize;
             
-            % Revert all RVEs to old 'converged' step
-            RVERevert(MacroMesh,inp_rve.problem.type,...
-                                      globDat.RVEoldStepSol,comsolPort);
+        % Revert all RVEs to old 'converged' step
+        RVERevert(MacroMesh,inp_rve.problem.type,...
+                                 globDat.RVEoldStepSol,comsolPort);
             
-            % Display messages to the command window
+        % Display messages to the command window
 	    disp(['Reverted to Step',num2str(step)]);
-            disp(['Step-size set to ',num2str(timestep)]);
+        disp(['Step-size set to ',num2str(timestep)]);
             
             break;
         end
@@ -243,7 +245,7 @@ while true
         err = norm(Sol-oldSol)/norm(Sol0);
         
         % Display errors in the command window
-	disp(['Iter = ',num2str(iter),', Error in Sol = ',num2str(err)])
+        disp(['Iter = ',num2str(iter),', Error in Sol = ',num2str(err)])
         
         % Check for convergence        
         if err < inp_macro.solver.nonlinsolvertol
@@ -253,8 +255,8 @@ while true
                                       num2str(iter),' iteration(s).'])
                                   
             % Modify history variable (Comment for elasticity!)
-             RVESetHistory(MacroMesh,inp_rve.problem.type,...
-                                       globDat.RVEoldStepSol,comsolPort);                                  
+            RVESetHistory(MacroMesh,inp_rve.problem.type,...
+                                      globDat.RVEoldStepSol,comsolPort);                                  
                                   
             [~,Res,GPData,Mflag] = AssembleMacroSystem(MacroMesh,Sol,...
                                          inp_macro,RVEdata,...
@@ -288,34 +290,34 @@ while true
                 break;
             end            
                                      
-            % Store nodal forces and solution into global database
+        % Store nodal forces and solution into global database
 	    globDat.Force(:,step) = Res;
 	    globDat.Disp(:,step)  = Sol;
-            globDat.stress        = GPData.stress;
+        globDat.stress        = GPData.stress;
             
-            % Update oldoldStep data
+        % Update oldoldStep data
 	    globDat.oldoldStepSol  = globDat.oldStepSol;
 	    globDat.oldoldStepRes  = globDat.oldStepRes;
 	    globDat.oldoldStepK    = globDat.oldStepK;
             
-            % Update oldStep data
+        % Update oldStep data
 	    globDat.oldStepSol  = Sol;
 	    globDat.oldStepRes  = Res;
 	    globDat.oldStepK    = K;
             
-            disp(['Reaction = ',num2str(globDat.Force(inp_macro.postproc.loadDof,step)), ...
-                      '[N], Displacement = ',num2str(globDat.Disp(inp_macro.postproc.dispDof,step)), ' [m]'])
+        disp(['Reaction = ',num2str(globDat.Force(inp_macro.postproc.loadDof,step)), ...
+              '[N], Displacement = ',num2str(globDat.Disp(inp_macro.postproc.dispDof,step)), ' [m]'])
                          
-            % Print out Macro-GPData and RVE images
-            [globDat.RVEoldStepSol,~] = RVEPostProcess(MacroMesh,...
-                    step,inp_rve.problem,comsolPort);
+        % Print out Macro-GPData and RVE images
+        [globDat.RVEoldStepSol,GPData.dam] = RVEPostProcess(MacroMesh,...
+                step,inp_rve.problem,comsolPort);
                 
-            % Create restart files if required
-            if ismember(step,inp_macro.restart.steps) == 1
-                CreateRestartFiles(Sol,Res,K,MacroMesh,RVEdata,step,time);
-            end
+        % Create restart files if required
+        if ismember(step,inp_macro.restart.steps) == 1
+            CreateRestartFiles(Sol,Res,K,MacroMesh,RVEdata,step,time);
+        end
             
-            break;
+        break;
             
         end   
        
@@ -323,8 +325,12 @@ while true
     end
     
     % Stop timestepping if certain criteria is met
+    max_load = abs(max(globDat.Force(inp_macro.postproc.loadDof,:)));
+    cur_load = abs(globDat.Force(inp_macro.postproc.loadDof,step));
+       
     if step     == inp_macro.solver.nsteps || ...
-       timestep == inp_macro.solver.finalstepsize
+       timestep <= inp_macro.solver.finalstepsize || ...
+       max_load < 1e-15 && cur_load/max_load < inp_macro.solver.loadfraction
        disp(' ')
        disp('    - Analysis termination criterion reached!')
        break;
